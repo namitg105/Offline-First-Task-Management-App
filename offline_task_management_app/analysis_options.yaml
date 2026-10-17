@@ -21,8 +21,14 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # Blocs here keep their use cases in PRIVATE final fields and take them as
+    # REQUIRED NAMED parameters. This lint wants an initializing formal
+    # (`this._userSignUp`) in place of `_userSignUp = userSignUp`, but Dart
+    # forbids a named parameter starting with an underscore, so the suggested
+    # fix does not compile. The only ways to satisfy it are making six
+    # dependencies public or making them positional; private and named is the
+    # better design, so the rule is turned off rather than worked around.
+    prefer_initializing_formals: false
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
