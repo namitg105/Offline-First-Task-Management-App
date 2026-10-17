@@ -16,6 +16,13 @@ import '../models/task_model.dart';
 /// whose responsibility is "local persistence of tasks, including their
 /// pending changes" keeps the atomicity guarantee impossible to break.
 abstract interface class TaskLocalDataSource {
+  /// Fires once after every successful local write.
+  ///
+  /// The sync engine listens to this so a change starts travelling to the
+  /// server moments after the user makes it, without the repository ever
+  /// having to know that a sync engine exists.
+  Stream<void> get changes;
+
   /// Emits the current list immediately, then again after every local write.
   Stream<List<TaskModel>> watchTasks(String userId);
 
@@ -52,6 +59,9 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   final StreamController<void> _changes = StreamController<void>.broadcast();
 
   TaskLocalDataSourceImpl(this.appDatabase);
+
+  @override
+  Stream<void> get changes => _changes.stream;
 
   // ------------------------------------------------------------------
   // Reads
