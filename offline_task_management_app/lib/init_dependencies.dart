@@ -27,6 +27,8 @@ import 'features/tasks/domain/usecases/delete_task.dart';
 import 'features/tasks/domain/usecases/toggle_task_completion.dart';
 import 'features/tasks/domain/usecases/update_task.dart';
 import 'features/tasks/domain/usecases/watch_tasks.dart';
+import 'features/sync/data/sync_service.dart';
+import 'features/sync/presentation/cubit/sync_cubit.dart';
 import 'features/tasks/presentation/bloc/task_bloc.dart';
 
 /// `serviceLocator` is the single place where concrete classes are chosen.
@@ -37,6 +39,7 @@ Future<void> initDependencies() async {
   await _initExternalServices();
   _initAuth();
   _initTasks();
+  _initSync();
 }
 
 Future<void> _initExternalServices() async {
@@ -141,4 +144,19 @@ void _initTasks() {
         deleteTask: serviceLocator(),
       ),
     );
+}
+
+/// Sync feature. Both registrations are singletons on purpose: there must be
+/// exactly one worker draining the outbox. Two would race each other and
+/// push the same rows twice.
+void _initSync() {
+  serviceLocator
+    ..registerLazySingleton<SyncService>(
+      () => SyncService(
+        localDataSource: serviceLocator(),
+        remoteDataSource: serviceLocator(),
+        connectionChecker: serviceLocator(),
+      ),
+    )
+    ..registerLazySingleton<SyncCubit>(() => SyncCubit(serviceLocator()));
 }

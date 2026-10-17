@@ -5,6 +5,8 @@ import '../../../../core/common/cubits/app_user/app_user_cubit.dart';
 import '../../../../core/common/widgets/loader.dart';
 import '../../../../core/utils/show_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../sync/presentation/cubit/sync_cubit.dart';
+import '../../../sync/presentation/widgets/sync_status_banner.dart';
 import '../bloc/task_bloc.dart';
 import '../widgets/task_card.dart';
 import '../widgets/tasks_empty_view.dart';
@@ -45,7 +47,17 @@ class _TaskListPageState extends State<TaskListPage> {
         onPressed: () => Navigator.push(context, TaskEditorPage.route()),
         child: const Icon(Icons.add),
       ),
-      body: BlocConsumer<TaskBloc, TaskState>(
+      body: Column(
+        children: [
+          const SyncStatusBanner(),
+          Expanded(child: _buildList(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    return BlocConsumer<TaskBloc, TaskState>(
         listenWhen: (previous, current) =>
             current.errorMessage != null &&
             previous.errorMessage != current.errorMessage,
@@ -67,28 +79,38 @@ class _TaskListPageState extends State<TaskListPage> {
             );
           }
 
-          if (state.isEmpty) return const TasksEmptyView();
-
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
-            itemCount: state.tasks.length,
-            itemBuilder: (context, index) {
-              final task = state.tasks[index];
-              return TaskCard(
-                task: task,
-                onToggle: () =>
-                    context.read<TaskBloc>().add(TaskCompletionToggled(task)),
-                onTap: () => Navigator.push(
-                  context,
-                  TaskEditorPage.route(task: task),
-                ),
-                onDelete: () =>
-                    context.read<TaskBloc>().add(TaskDeleted(task.id)),
-              );
-            },
+          // Pull-to-refresh forces a sync. It never re-reads the list from
+          // the server into the UI — the list always comes from SQLite.
+          return RefreshIndicator(
+            onRefresh: () => context.read<SyncCubit>().syncNow(),
+            child: state.isEmpty
+                ? ListView(
+                    children: const [
+                      SizedBox(height: 120),
+                      TasksEmptyView(),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                    itemCount: state.tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = state.tasks[index];
+                      return TaskCard(
+                        task: task,
+                        onToggle: () => context
+                            .read<TaskBloc>()
+                            .add(TaskCompletionToggled(task)),
+                        onTap: () => Navigator.push(
+                          context,
+                          TaskEditorPage.route(task: task),
+                        ),
+                        onDelete: () =>
+                            context.read<TaskBloc>().add(TaskDeleted(task.id)),
+                      );
+                    },
+                  ),
           );
         },
-      ),
     );
   }
 }
