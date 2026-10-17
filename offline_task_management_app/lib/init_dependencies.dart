@@ -4,6 +4,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/common/cubits/app_user/app_user_cubit.dart';
+import 'core/database/app_database.dart';
 import 'core/network/connection_checker.dart';
 import 'core/secrets/app_secrets.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
@@ -16,6 +17,7 @@ import 'features/auth/domain/usecases/user_logout.dart';
 import 'features/auth/domain/usecases/user_sign_in_with_google.dart';
 import 'features/auth/domain/usecases/user_sign_up.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/tasks/data/datasources/task_local_data_source.dart';
 
 /// `serviceLocator` is the single place where concrete classes are chosen.
 /// Everywhere else in the app only ever mentions interfaces.
@@ -24,6 +26,7 @@ final serviceLocator = GetIt.instance;
 Future<void> initDependencies() async {
   await _initExternalServices();
   _initAuth();
+  _initTasks();
 }
 
 Future<void> _initExternalServices() async {
@@ -45,6 +48,9 @@ Future<void> _initExternalServices() async {
 
   // One instance for the whole app lifetime: it holds the active session user.
   serviceLocator.registerLazySingleton<AppUserCubit>(() => AppUserCubit());
+
+  // The SQLite file has exactly one owner.
+  serviceLocator.registerLazySingleton<AppDatabase>(() => AppDatabase());
 }
 
 /// Registration order mirrors the dependency arrows:
@@ -85,4 +91,14 @@ void _initAuth() {
         appUserCubit: serviceLocator(),
       ),
     );
+}
+
+/// Tasks feature — local persistence only at this stage.
+void _initTasks() {
+  // MUST be a lazy singleton, not a factory: this object owns the change
+  // stream that every open screen listens to. A second instance would have a
+  // second stream, and half the UI would stop updating.
+  serviceLocator.registerLazySingleton<TaskLocalDataSource>(
+    () => TaskLocalDataSourceImpl(serviceLocator()),
+  );
 }
