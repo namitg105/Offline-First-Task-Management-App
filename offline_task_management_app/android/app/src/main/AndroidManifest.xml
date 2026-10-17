@@ -1,6 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter only puts INTERNET in the debug and profile manifests, because
+         the tooling needs it for hot reload. A RELEASE build therefore ships
+         with no network permission at all: sign-in and every sync silently
+         fail on the APK while working perfectly under `flutter run`.
+         This app talks to Supabase in release too, so it must be declared here. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Used by internet_connection_checker_plus to tell "connected to wifi"
+         apart from "actually able to reach the internet". -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
-        android:label="offline_task_management_app"
+        android:label="Offline Tasks"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
