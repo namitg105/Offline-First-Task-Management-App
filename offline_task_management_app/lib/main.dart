@@ -5,7 +5,8 @@ import 'core/common/cubits/app_user/app_user_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/login_page.dart';
-import 'features/home/presentation/pages/home_page.dart';
+import 'features/tasks/presentation/bloc/task_bloc.dart';
+import 'features/tasks/presentation/pages/task_list_page.dart';
 import 'init_dependencies.dart';
 
 Future<void> main() async {
@@ -17,6 +18,7 @@ Future<void> main() async {
       providers: [
         BlocProvider(create: (_) => serviceLocator<AppUserCubit>()),
         BlocProvider(create: (_) => serviceLocator<AuthBloc>()),
+        BlocProvider(create: (_) => serviceLocator<TaskBloc>()),
       ],
       child: const MyApp(),
     ),
@@ -49,7 +51,7 @@ class _MyAppState extends State<MyApp> {
       home: BlocSelector<AppUserCubit, AppUserState, bool>(
         selector: (state) => state is AppUserLoggedIn,
         builder: (context, isLoggedIn) =>
-            isLoggedIn ? const HomePage() : const LoginPage(),
+            isLoggedIn ? const TaskListPage() : const LoginPage(),
       ),
     );
   }
