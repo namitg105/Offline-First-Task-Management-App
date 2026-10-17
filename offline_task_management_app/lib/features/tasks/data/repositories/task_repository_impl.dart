@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/task.dart';
+import '../../domain/entities/task_filter.dart';
 import '../../domain/repository/task_repository.dart';
 import '../datasources/task_local_data_source.dart';
 import '../models/task_model.dart';
@@ -27,8 +28,12 @@ class TaskRepositoryImpl implements TaskRepository {
   });
 
   @override
-  Stream<List<Task>> watchTasks(String userId) =>
-      localDataSource.watchTasks(userId);
+  Stream<List<Task>> watchTasks(String userId, TaskFilter filter) =>
+      localDataSource.watchTasks(userId, filter);
+
+  @override
+  Future<List<String>> getCategories(String userId) =>
+      localDataSource.getCategories(userId);
 
   @override
   Future<Either<Failure, Task>> createTask({

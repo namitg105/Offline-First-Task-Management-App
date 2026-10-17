@@ -9,6 +9,7 @@ import '../../../sync/presentation/cubit/sync_cubit.dart';
 import '../../../sync/presentation/widgets/sync_status_banner.dart';
 import '../bloc/task_bloc.dart';
 import '../widgets/task_card.dart';
+import '../widgets/task_search_bar.dart';
 import '../widgets/tasks_empty_view.dart';
 import 'task_editor_page.dart';
 
@@ -50,6 +51,7 @@ class _TaskListPageState extends State<TaskListPage> {
       body: Column(
         children: [
           const SyncStatusBanner(),
+          const TaskSearchBar(),
           Expanded(child: _buildList(context)),
         ],
       ),
@@ -83,11 +85,19 @@ class _TaskListPageState extends State<TaskListPage> {
           // the server into the UI — the list always comes from SQLite.
           return RefreshIndicator(
             onRefresh: () => context.read<SyncCubit>().syncNow(),
-            child: state.isEmpty
+            child: state.tasks.isEmpty
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      TasksEmptyView(),
+                    children: [
+                      const SizedBox(height: 100),
+                      if (state.isFilteredEmpty)
+                        const TasksEmptyView(
+                          icon: Icons.search_off,
+                          title: 'No matching tasks',
+                          subtitle:
+                              'Try a different search, or clear your filters.',
+                        )
+                      else
+                        const TasksEmptyView(),
                     ],
                   )
                 : ListView.builder(

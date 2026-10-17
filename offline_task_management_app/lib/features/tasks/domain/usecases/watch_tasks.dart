@@ -1,4 +1,5 @@
 import '../entities/task.dart';
+import '../entities/task_filter.dart';
 import '../repository/task_repository.dart';
 
 /// Does not implement [UseCase] because that contract returns a Future.
@@ -9,5 +10,6 @@ class WatchTasks {
 
   const WatchTasks(this.taskRepository);
 
-  Stream<List<Task>> call(String userId) => taskRepository.watchTasks(userId);
+  Stream<List<Task>> call(String userId, TaskFilter filter) =>
+      taskRepository.watchTasks(userId, filter);
 }
