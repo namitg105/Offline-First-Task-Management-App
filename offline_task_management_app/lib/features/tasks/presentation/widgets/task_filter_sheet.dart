@@ -8,7 +8,7 @@ import 'priority_chip.dart';
 
 Future<void> showTaskFilterSheet(BuildContext context) {
   final bloc = context.read<TaskBloc>();
-  bloc.add(TaskCategoriesRequested());
+  bloc.add(const TaskCategoriesRequested());
 
   return showModalBottomSheet<void>(
     context: context,

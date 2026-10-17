@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/sync_state.dart';
-import '../cubit/sync_cubit.dart';
+import '../bloc/sync_bloc.dart';
 
 /// The brief asks the app to "show whether the app is online or offline".
 ///
@@ -14,7 +14,7 @@ class SyncStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SyncCubit, SyncState>(
+    return BlocBuilder<SyncBloc, SyncState>(
       builder: (context, state) {
         final info = _describe(state);
         if (info == null) return const SizedBox.shrink();
@@ -23,7 +23,7 @@ class SyncStatusBanner extends StatelessWidget {
           color: info.color.withValues(alpha: 0.16),
           child: InkWell(
             onTap: state.isOnline && !state.isSyncing
-                ? () => context.read<SyncCubit>().syncNow()
+                ? () => context.read<SyncBloc>().add(const SyncRequested())
                 : null,
             child: Padding(
               padding:

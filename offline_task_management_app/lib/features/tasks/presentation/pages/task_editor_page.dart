@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/common/cubits/app_user/app_user_cubit.dart';
+import '../../../../core/common/blocs/app_user/app_user_bloc.dart';
 import '../../../../core/utils/show_snackbar.dart';
 import '../../domain/entities/task.dart';
 import '../bloc/task_bloc.dart';
@@ -83,7 +83,7 @@ class _TaskEditorPageState extends State<TaskEditorPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
-    final userState = context.read<AppUserCubit>().state;
+    final userState = context.read<AppUserBloc>().state;
     if (userState is! AppUserLoggedIn) {
       showSnackBar(context, 'You are signed out. Please log in again.');
       return;
@@ -91,7 +91,7 @@ class _TaskEditorPageState extends State<TaskEditorPage> {
 
     final bloc = context.read<TaskBloc>();
     if (widget.isEditing) {
-      bloc.add(TaskEdited(
+      bloc.add(TaskEditSubmitted(
         widget.task!.copyWith(
           title: _titleController.text,
           description: _descriptionController.text,
@@ -102,7 +102,7 @@ class _TaskEditorPageState extends State<TaskEditorPage> {
         ),
       ));
     } else {
-      bloc.add(TaskCreated(
+      bloc.add(TaskCreationSubmitted(
         userId: userState.user.id,
         title: _titleController.text,
         description: _descriptionController.text,

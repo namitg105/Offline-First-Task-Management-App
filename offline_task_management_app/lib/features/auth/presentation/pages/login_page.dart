@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   void _login() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(
-          AuthLogin(
+          AuthLoginSubmitted(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           ),
@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.all(15),
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthFailureState) {
+            if (state is AuthFailure) {
               showSnackBar(context, state.message);
             }
           },
@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 20),
                     GoogleAuthButton(
                       onPressed: () =>
-                          context.read<AuthBloc>().add(AuthGoogleSignIn()),
+                          context.read<AuthBloc>().add(const AuthGoogleSignInPressed()),
                     ),
                     const SizedBox(height: 20),
                     Center(

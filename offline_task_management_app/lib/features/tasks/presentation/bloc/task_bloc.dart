@@ -41,38 +41,29 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         _deleteTask = deleteTask,
         _getTaskCategories = getTaskCategories,
         super(const TaskState()) {
-    on<TasksSubscriptionRequested>(_onSubscriptionRequested);
-    on<TaskFilterChanged>(_onFilterChanged);
-    on<TaskCategoriesRequested>(_onCategoriesRequested);
-    on<TasksUpdated>((event, emit) => emit(state.copyWith(
-          status: TaskStatus.success,
-          tasks: event.tasks,
-          clearError: true,
-        )));
-    on<TasksLoadFailed>((event, emit) => emit(state.copyWith(
-          status: TaskStatus.failure,
-          errorMessage: event.message,
-        )));
-    on<TaskCreated>(_onCreated);
-    on<TaskEdited>(_onEdited);
-    on<TaskCompletionToggled>(_onToggled);
-    on<TaskDeleted>(_onDeleted);
-    on<TaskErrorDismissed>(
-      (_, emit) => emit(state.copyWith(clearError: true)),
-    );
+    on<TasksSubscriptionRequested>(_onTasksSubscriptionRequested);
+    on<TaskFilterChanged>(_onTaskFilterChanged);
+    on<TaskCategoriesRequested>(_onTaskCategoriesRequested);
+    on<TasksUpdated>(_onTasksUpdated);
+    on<TasksLoadFailed>(_onTasksLoadFailed);
+    on<TaskCreationSubmitted>(_onTaskCreationSubmitted);
+    on<TaskEditSubmitted>(_onTaskEditSubmitted);
+    on<TaskCompletionToggled>(_onTaskCompletionToggled);
+    on<TaskDeletionRequested>(_onTaskDeletionRequested);
+    on<TaskErrorDismissed>(_onTaskErrorDismissed);
   }
 
-  void _onSubscriptionRequested(
+  void _onTasksSubscriptionRequested(
     TasksSubscriptionRequested event,
     Emitter<TaskState> emit,
   ) {
     _userId = event.userId;
     emit(state.copyWith(status: TaskStatus.loading));
     _resubscribe(state.filter);
-    add(TaskCategoriesRequested());
+    add(const TaskCategoriesRequested());
   }
 
-  void _onFilterChanged(TaskFilterChanged event, Emitter<TaskState> emit) {
+  void _onTaskFilterChanged(TaskFilterChanged event, Emitter<TaskState> emit) {
     if (event.filter == state.filter) return;
     emit(state.copyWith(filter: event.filter));
     _resubscribe(event.filter);
@@ -95,7 +86,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  Future<void> _onCategoriesRequested(
+  Future<void> _onTaskCategoriesRequested(
     TaskCategoriesRequested event,
     Emitter<TaskState> emit,
   ) async {
@@ -112,7 +103,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   // notifies, the subscription above emits. One path in, one path out — the
   // screen can never disagree with the database.
 
-  Future<void> _onCreated(TaskCreated event, Emitter<TaskState> emit) async {
+  Future<void> _onTaskCreationSubmitted(
+    TaskCreationSubmitted event,
+    Emitter<TaskState> emit,
+  ) async {
     final result = await _createTask(CreateTaskParams(
       userId: event.userId,
       title: event.title,
@@ -127,7 +121,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  Future<void> _onEdited(TaskEdited event, Emitter<TaskState> emit) async {
+  Future<void> _onTaskEditSubmitted(
+    TaskEditSubmitted event,
+    Emitter<TaskState> emit,
+  ) async {
     final result = await _updateTask(event.task);
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failure.message)),
@@ -135,7 +132,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  Future<void> _onToggled(
+  Future<void> _onTaskCompletionToggled(
     TaskCompletionToggled event,
     Emitter<TaskState> emit,
   ) async {
@@ -146,12 +143,37 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     );
   }
 
-  Future<void> _onDeleted(TaskDeleted event, Emitter<TaskState> emit) async {
+  Future<void> _onTaskDeletionRequested(
+    TaskDeletionRequested event,
+    Emitter<TaskState> emit,
+  ) async {
     final result = await _deleteTask(event.taskId);
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failure.message)),
       (_) {},
     );
+  }
+
+  void _onTasksUpdated(TasksUpdated event, Emitter<TaskState> emit) {
+    emit(state.copyWith(
+      status: TaskStatus.success,
+      tasks: event.tasks,
+      clearError: true,
+    ));
+  }
+
+  void _onTasksLoadFailed(TasksLoadFailed event, Emitter<TaskState> emit) {
+    emit(state.copyWith(
+      status: TaskStatus.failure,
+      errorMessage: event.message,
+    ));
+  }
+
+  void _onTaskErrorDismissed(
+    TaskErrorDismissed event,
+    Emitter<TaskState> emit,
+  ) {
+    emit(state.copyWith(clearError: true));
   }
 
   @override

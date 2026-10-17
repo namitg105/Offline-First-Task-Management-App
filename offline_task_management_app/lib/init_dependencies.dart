@@ -4,7 +4,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import 'core/common/cubits/app_user/app_user_cubit.dart';
+import 'core/common/blocs/app_user/app_user_bloc.dart';
 import 'core/database/app_database.dart';
 import 'core/network/connection_checker.dart';
 import 'core/secrets/app_secrets.dart';
@@ -29,7 +29,7 @@ import 'features/tasks/domain/usecases/toggle_task_completion.dart';
 import 'features/tasks/domain/usecases/update_task.dart';
 import 'features/tasks/domain/usecases/watch_tasks.dart';
 import 'features/sync/data/sync_service.dart';
-import 'features/sync/presentation/cubit/sync_cubit.dart';
+import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/tasks/presentation/bloc/task_bloc.dart';
 
 /// `serviceLocator` is the single place where concrete classes are chosen.
@@ -61,7 +61,7 @@ Future<void> _initExternalServices() async {
   );
 
   // One instance for the whole app lifetime: it holds the active session user.
-  serviceLocator.registerLazySingleton<AppUserCubit>(() => AppUserCubit());
+  serviceLocator.registerLazySingleton<AppUserBloc>(() => AppUserBloc());
 
   // The SQLite file has exactly one owner.
   serviceLocator.registerLazySingleton<AppDatabase>(() => AppDatabase());
@@ -104,7 +104,6 @@ void _initAuth() {
         userSignInWithGoogle: serviceLocator(),
         currentUser: serviceLocator(),
         userLogout: serviceLocator(),
-        appUserCubit: serviceLocator(),
       ),
     );
 }
@@ -161,5 +160,7 @@ void _initSync() {
         connectionChecker: serviceLocator(),
       ),
     )
-    ..registerLazySingleton<SyncCubit>(() => SyncCubit(serviceLocator()));
+    ..registerLazySingleton<SyncBloc>(
+      () => SyncBloc(syncService: serviceLocator()),
+    );
 }

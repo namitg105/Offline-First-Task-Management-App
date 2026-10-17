@@ -41,7 +41,7 @@ Three layers, feature-first, dependencies pointing inward only.
 ```
 lib/
 ├── core/                     shared by every feature
-│   ├── common/               User entity, AppUserCubit, shared widgets
+│   ├── common/               User entity, AppUserBloc, shared widgets
 │   ├── database/             AppDatabase — the only thing that opens SQLite
 │   ├── error/                Failure (returned) and Exception (thrown)
 │   ├── network/              ConnectionChecker
@@ -66,6 +66,16 @@ Rules the codebase actually keeps to:
   job. Shared types such as `User` live in `core/common`.
 - **Swapping Supabase for Firebase** would mean rewriting `data/datasources`
   and `data/models`. Zero lines of `domain/` or `presentation/` would change.
+- **BLoC everywhere, no Cubits.** Every state change in the app arrives the
+  same way — as a named event with a matching handler — so a bloc observer
+  shows the whole app's behaviour as one readable log.
+- **Events are named in the past tense**, because an event records something
+  that already happened in the UI rather than ordering the bloc about:
+  `AuthLoginSubmitted`, `TaskDeletionRequested`, `SyncWatchStarted`. Each has
+  a handler of the same name prefixed with `_on`.
+- **Blocs do not talk to other blocs.** `auth` never imports `sync`, `sync`
+  never imports `auth`. Each reports what happened and `main.dart` — the app
+  shell — forwards it on.
 
 ---
 

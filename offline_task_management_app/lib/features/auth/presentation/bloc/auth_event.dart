@@ -1,30 +1,53 @@
 part of 'auth_bloc.dart';
 
+/// Events are named in the PAST TENSE, because an event records something
+/// that has already happened in the UI — the user submitted the form, pressed
+/// the button, asked for a sync. They are not commands telling the bloc what
+/// to do; the bloc decides that. `AuthLoginSubmitted` reads as a fact,
+/// `AuthLogin` reads as an order.
 @immutable
-sealed class AuthEvent {}
+sealed class AuthEvent {
+  const AuthEvent();
+}
 
-final class AuthSignUp extends AuthEvent {
+/// The sign-up form passed validation and was submitted.
+final class AuthSignUpSubmitted extends AuthEvent {
   final String name;
   final String email;
   final String password;
 
-  AuthSignUp({
+  const AuthSignUpSubmitted({
     required this.name,
     required this.email,
     required this.password,
   });
 }
 
-final class AuthLogin extends AuthEvent {
+/// The login form passed validation and was submitted.
+final class AuthLoginSubmitted extends AuthEvent {
   final String email;
   final String password;
 
-  AuthLogin({required this.email, required this.password});
+  const AuthLoginSubmitted({required this.email, required this.password});
 }
 
-final class AuthGoogleSignIn extends AuthEvent {}
+/// The "Continue with Google" button was pressed.
+final class AuthGoogleSignInPressed extends AuthEvent {
+  const AuthGoogleSignInPressed();
+}
 
-/// Fired once when the app boots, to restore a previous session.
-final class AuthIsUserLoggedIn extends AuthEvent {}
+/// The app started and asked whether this device still holds a session.
+/// Works offline — see AuthRepositoryImpl.currentUser().
+final class AuthSessionRestoreRequested extends AuthEvent {
+  const AuthSessionRestoreRequested();
+}
 
-final class AuthLogout extends AuthEvent {}
+/// The log-out button was pressed.
+final class AuthLogoutPressed extends AuthEvent {
+  const AuthLogoutPressed();
+}
+
+/// The UI has shown the current failure message and it can be cleared.
+final class AuthErrorDismissed extends AuthEvent {
+  const AuthErrorDismissed();
+}

@@ -38,7 +38,7 @@ class _SignUpPageState extends State<SignUpPage> {
   void _signUp() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthBloc>().add(
-          AuthSignUp(
+          AuthSignUpSubmitted(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
@@ -54,11 +54,12 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.all(15),
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthFailureState) {
+            if (state is AuthFailure) {
               showSnackBar(context, state.message);
             } else if (state is AuthSuccess) {
-              // AppUserCubit already changed, so the root widget is about to
-              // swap to the home screen. Just clear this page off the stack.
+              // AppUserBloc has already been told, so the root widget is
+              // about to swap to the task list. Just clear this page off
+              // the stack.
               Navigator.of(context).popUntil((route) => route.isFirst);
             }
           },
@@ -109,7 +110,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     const SizedBox(height: 20),
                     GoogleAuthButton(
                       onPressed: () =>
-                          context.read<AuthBloc>().add(AuthGoogleSignIn()),
+                          context.read<AuthBloc>().add(const AuthGoogleSignInPressed()),
                     ),
                     const SizedBox(height: 20),
                     Center(

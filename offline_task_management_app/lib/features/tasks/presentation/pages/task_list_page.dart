@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/common/cubits/app_user/app_user_cubit.dart';
 import '../../../../core/common/widgets/loader.dart';
 import '../../../../core/utils/show_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../sync/presentation/cubit/sync_cubit.dart';
+import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/widgets/sync_status_banner.dart';
 import '../bloc/task_bloc.dart';
 import '../widgets/task_card.dart';
@@ -13,23 +12,10 @@ import '../widgets/task_search_bar.dart';
 import '../widgets/tasks_empty_view.dart';
 import 'task_editor_page.dart';
 
-class TaskListPage extends StatefulWidget {
+/// Stateless now: the database subscription is started from the app shell when
+/// the session begins, so this screen no longer has any lifecycle of its own.
+class TaskListPage extends StatelessWidget {
   const TaskListPage({super.key});
-
-  @override
-  State<TaskListPage> createState() => _TaskListPageState();
-}
-
-class _TaskListPageState extends State<TaskListPage> {
-  @override
-  void initState() {
-    super.initState();
-    final userState = context.read<AppUserCubit>().state;
-    if (userState is AppUserLoggedIn) {
-      // Subscribe once. From here on the database pushes updates to us.
-      context.read<TaskBloc>().add(TasksSubscriptionRequested(userState.user.id));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +26,8 @@ class _TaskListPageState extends State<TaskListPage> {
           IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthBloc>().add(AuthLogout()),
+            onPressed: () =>
+                context.read<AuthBloc>().add(const AuthLogoutPressed()),
           ),
         ],
       ),
@@ -60,67 +47,80 @@ class _TaskListPageState extends State<TaskListPage> {
 
   Widget _buildList(BuildContext context) {
     return BlocConsumer<TaskBloc, TaskState>(
-        listenWhen: (previous, current) =>
-            current.errorMessage != null &&
-            previous.errorMessage != current.errorMessage,
-        listener: (context, state) {
-          showSnackBar(context, state.errorMessage!);
-          context.read<TaskBloc>().add(TaskErrorDismissed());
-        },
-        builder: (context, state) {
-          if (state.status == TaskStatus.initial ||
-              (state.status == TaskStatus.loading && state.tasks.isEmpty)) {
-            return const Loader();
-          }
+      listenWhen: (previous, current) =>
+          current.errorMessage != null &&
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        showSnackBar(context, state.errorMessage!);
+        context.read<TaskBloc>().add(const TaskErrorDismissed());
+      },
+      builder: (context, state) {
+        if (state.status == TaskStatus.initial ||
+            (state.status == TaskStatus.loading && state.tasks.isEmpty)) {
+          return const Loader();
+        }
 
-          if (state.status == TaskStatus.failure && state.tasks.isEmpty) {
-            return TasksEmptyView(
-              icon: Icons.error_outline,
-              title: 'Could not load your tasks',
-              subtitle: state.errorMessage ?? 'Please restart the app.',
-            );
-          }
-
-          // Pull-to-refresh forces a sync. It never re-reads the list from
-          // the server into the UI — the list always comes from SQLite.
-          return RefreshIndicator(
-            onRefresh: () => context.read<SyncCubit>().syncNow(),
-            child: state.tasks.isEmpty
-                ? ListView(
-                    children: [
-                      const SizedBox(height: 100),
-                      if (state.isFilteredEmpty)
-                        const TasksEmptyView(
-                          icon: Icons.search_off,
-                          title: 'No matching tasks',
-                          subtitle:
-                              'Try a different search, or clear your filters.',
-                        )
-                      else
-                        const TasksEmptyView(),
-                    ],
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
-                    itemCount: state.tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = state.tasks[index];
-                      return TaskCard(
-                        task: task,
-                        onToggle: () => context
-                            .read<TaskBloc>()
-                            .add(TaskCompletionToggled(task)),
-                        onTap: () => Navigator.push(
-                          context,
-                          TaskEditorPage.route(task: task),
-                        ),
-                        onDelete: () =>
-                            context.read<TaskBloc>().add(TaskDeleted(task.id)),
-                      );
-                    },
-                  ),
+        if (state.status == TaskStatus.failure && state.tasks.isEmpty) {
+          return TasksEmptyView(
+            icon: Icons.error_outline,
+            title: 'Could not load your tasks',
+            subtitle: state.errorMessage ?? 'Please restart the app.',
           );
-        },
+        }
+
+        // Pull-to-refresh forces a sync. It never re-reads the list from the
+        // server into the UI — the list always comes from SQLite.
+        return RefreshIndicator(
+          onRefresh: () => _syncAndWait(context),
+          child: state.tasks.isEmpty
+              ? ListView(
+                  children: [
+                    const SizedBox(height: 100),
+                    if (state.isFilteredEmpty)
+                      const TasksEmptyView(
+                        icon: Icons.search_off,
+                        title: 'No matching tasks',
+                        subtitle:
+                            'Try a different search, or clear your filters.',
+                      )
+                    else
+                      const TasksEmptyView(),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
+                  itemCount: state.tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = state.tasks[index];
+                    return TaskCard(
+                      task: task,
+                      onToggle: () => context
+                          .read<TaskBloc>()
+                          .add(TaskCompletionToggled(task)),
+                      onTap: () => Navigator.push(
+                        context,
+                        TaskEditorPage.route(task: task),
+                      ),
+                      onDelete: () => context
+                          .read<TaskBloc>()
+                          .add(TaskDeletionRequested(task.id)),
+                    );
+                  },
+                ),
+        );
+      },
     );
+  }
+
+  /// RefreshIndicator keeps its spinner up until the future completes, but
+  /// dispatching an event returns immediately. So dispatch, then wait for the
+  /// bloc to report that it has stopped syncing — with a timeout, because a
+  /// spinner that never goes away is worse than one that gives up.
+  Future<void> _syncAndWait(BuildContext context) async {
+    final syncBloc = context.read<SyncBloc>();
+    syncBloc.add(const SyncRequested());
+    await syncBloc.stream
+        .firstWhere((state) => !state.isSyncing)
+        .timeout(const Duration(seconds: 10), onTimeout: () => syncBloc.state);
   }
 }
