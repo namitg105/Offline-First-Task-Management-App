@@ -11,29 +11,46 @@ enum TaskStatus { initial, loading, success, failure }
 class TaskState extends Equatable {
   final TaskStatus status;
   final List<Task> tasks;
+  final TaskFilter filter;
+  final List<String> categories;
   final String? errorMessage;
 
   const TaskState({
     this.status = TaskStatus.initial,
     this.tasks = const [],
+    this.filter = const TaskFilter(),
+    this.categories = const [],
     this.errorMessage,
   });
 
-  bool get isEmpty => status == TaskStatus.success && tasks.isEmpty;
+  /// Truly empty: no tasks at all.
+  bool get isEmpty =>
+      status == TaskStatus.success && tasks.isEmpty && !filter.isActive;
+
+  /// Empty only because of the current search or filters — a different
+  /// message, because "add your first task" is unhelpful when the user has
+  /// forty tasks and a typo in the search box.
+  bool get isFilteredEmpty =>
+      status == TaskStatus.success && tasks.isEmpty && filter.isActive;
 
   TaskState copyWith({
     TaskStatus? status,
     List<Task>? tasks,
+    TaskFilter? filter,
+    List<String>? categories,
     String? errorMessage,
     bool clearError = false,
   }) {
     return TaskState(
       status: status ?? this.status,
       tasks: tasks ?? this.tasks,
+      filter: filter ?? this.filter,
+      categories: categories ?? this.categories,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
   @override
-  List<Object?> get props => [status, tasks, errorMessage];
+  List<Object?> get props =>
+      [status, tasks, filter, categories, errorMessage];
 }

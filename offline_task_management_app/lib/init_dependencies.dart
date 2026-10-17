@@ -24,6 +24,7 @@ import 'features/tasks/data/repositories/task_repository_impl.dart';
 import 'features/tasks/domain/repository/task_repository.dart';
 import 'features/tasks/domain/usecases/create_task.dart';
 import 'features/tasks/domain/usecases/delete_task.dart';
+import 'features/tasks/domain/usecases/get_task_categories.dart';
 import 'features/tasks/domain/usecases/toggle_task_completion.dart';
 import 'features/tasks/domain/usecases/update_task.dart';
 import 'features/tasks/domain/usecases/watch_tasks.dart';
@@ -134,6 +135,7 @@ void _initTasks() {
     ..registerFactory(() => UpdateTask(serviceLocator()))
     ..registerFactory(() => ToggleTaskCompletion(serviceLocator()))
     ..registerFactory(() => DeleteTask(serviceLocator()))
+    ..registerFactory(() => GetTaskCategories(serviceLocator()))
     // Bloc
     ..registerLazySingleton(
       () => TaskBloc(
@@ -142,6 +144,7 @@ void _initTasks() {
         updateTask: serviceLocator(),
         toggleTaskCompletion: serviceLocator(),
         deleteTask: serviceLocator(),
+        getTaskCategories: serviceLocator(),
       ),
     );
 }

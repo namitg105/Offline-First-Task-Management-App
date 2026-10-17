@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../domain/entities/task_filter.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/outbox_entry.dart';
 import '../models/task_model.dart';
@@ -24,10 +25,13 @@ abstract interface class TaskLocalDataSource {
   Stream<void> get changes;
 
   /// Emits the current list immediately, then again after every local write.
-  Stream<List<TaskModel>> watchTasks(String userId);
+  Stream<List<TaskModel>> watchTasks(String userId, TaskFilter filter);
 
-  Future<List<TaskModel>> getTasks(String userId);
+  Future<List<TaskModel>> getTasks(String userId, TaskFilter filter);
   Future<TaskModel?> getTaskById(String id);
+
+  /// Distinct categories in use, to populate the filter sheet.
+  Future<List<String>> getCategories(String userId);
 
   /// Writes the task AND queues it for the server, atomically.
   Future<void> saveTask(TaskModel task);
@@ -68,29 +72,96 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   // ------------------------------------------------------------------
 
   @override
-  Stream<List<TaskModel>> watchTasks(String userId) async* {
-    yield await getTasks(userId);
+  Stream<List<TaskModel>> watchTasks(String userId, TaskFilter filter) async* {
+    yield await getTasks(userId, filter);
     await for (final _ in _changes.stream) {
-      yield await getTasks(userId);
+      yield await getTasks(userId, filter);
     }
   }
 
+  /// Searching and filtering happen in SQL, not in Dart.
+  ///
+  /// Pulling every row into memory and running `.where()` over it works fine
+  /// with twenty tasks and falls over with two thousand. The database already
+  /// has indexes for exactly this; letting it do the work is both faster and
+  /// less code.
   @override
-  Future<List<TaskModel>> getTasks(String userId) async {
+  Future<List<TaskModel>> getTasks(String userId, TaskFilter filter) async {
     try {
       final db = await appDatabase.database;
+
       // deleted_at IS NULL hides tombstones: rows that still exist only so
       // the delete can be replayed to the server.
+      final where = StringBuffer('user_id = ? AND deleted_at IS NULL');
+      final args = <Object?>[userId];
+
+      if (filter.query.trim().isNotEmpty) {
+        // Every user value goes in as a `?` placeholder, never string
+        // concatenation. A task titled  '; DROP TABLE tasks; --  is then
+        // just an oddly named task instead of an incident.
+        where.write(
+          ' AND (title LIKE ? OR description LIKE ? OR category LIKE ?)',
+        );
+        final pattern = '%${filter.query.trim()}%';
+        args.addAll([pattern, pattern, pattern]);
+      }
+
+      switch (filter.completion) {
+        case TaskCompletionFilter.pending:
+          where.write(' AND is_completed = 0');
+        case TaskCompletionFilter.completed:
+          where.write(' AND is_completed = 1');
+        case TaskCompletionFilter.all:
+          break;
+      }
+
+      if (filter.priority != null) {
+        where.write(' AND priority = ?');
+        args.add(filter.priority!.index);
+      }
+
+      if (filter.category != null && filter.category!.isNotEmpty) {
+        where.write(' AND category = ?');
+        args.add(filter.category);
+      }
+
       final rows = await db.query(
         'tasks',
-        where: 'user_id = ? AND deleted_at IS NULL',
-        whereArgs: [userId],
-        orderBy: 'is_completed ASC, due_at IS NULL, due_at ASC, created_at DESC',
+        where: where.toString(),
+        whereArgs: args,
+        orderBy: _orderBy(filter.sort),
       );
       return rows.map(TaskModel.fromLocalRow).toList();
     } catch (e) {
       throw CacheException('Could not read tasks: $e');
     }
+  }
+
+  /// Built from an enum, never from user text, so ORDER BY can never become
+  /// an injection point the way a WHERE clause could.
+  ///
+  /// `due_at IS NULL` first pushes undated tasks to the bottom: in SQLite a
+  /// NULL would otherwise sort before every real date and bury the urgent
+  /// ones under tasks with no deadline at all.
+  String _orderBy(TaskSort sort) => switch (sort) {
+        TaskSort.dueDate =>
+          'is_completed ASC, due_at IS NULL, due_at ASC, created_at DESC',
+        TaskSort.priority =>
+          'is_completed ASC, priority DESC, due_at IS NULL, due_at ASC',
+        TaskSort.createdAt => 'is_completed ASC, created_at DESC',
+        TaskSort.title => 'is_completed ASC, title COLLATE NOCASE ASC',
+      };
+
+  @override
+  Future<List<String>> getCategories(String userId) async {
+    final db = await appDatabase.database;
+    final rows = await db.rawQuery(
+      '''SELECT DISTINCT category FROM tasks
+         WHERE user_id = ? AND deleted_at IS NULL AND category <> ''
+         ORDER BY category COLLATE NOCASE ASC''',
+      [userId],
+    );
+    return rows.map((row) => row['category'] as String).toList();
   }
 
   @override
