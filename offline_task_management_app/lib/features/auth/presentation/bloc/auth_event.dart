@@ -1,16 +1,12 @@
 part of 'auth_bloc.dart';
 
-/// Events are named in the PAST TENSE, because an event records something
-/// that has already happened in the UI — the user submitted the form, pressed
-/// the button, asked for a sync. They are not commands telling the bloc what
-/// to do; the bloc decides that. `AuthLoginSubmitted` reads as a fact,
-/// `AuthLogin` reads as an order.
+/// Events are named in the past tense: they record something that already happened
+/// in the UI (the form was submitted), not commands to the bloc.
 @immutable
 sealed class AuthEvent {
   const AuthEvent();
 }
 
-/// The sign-up form passed validation and was submitted.
 final class AuthSignUpSubmitted extends AuthEvent {
   final String name;
   final String email;
@@ -23,7 +19,6 @@ final class AuthSignUpSubmitted extends AuthEvent {
   });
 }
 
-/// The login form passed validation and was submitted.
 final class AuthLoginSubmitted extends AuthEvent {
   final String email;
   final String password;
@@ -31,7 +26,6 @@ final class AuthLoginSubmitted extends AuthEvent {
   const AuthLoginSubmitted({required this.email, required this.password});
 }
 
-/// The "Continue with Google" button was pressed.
 final class AuthGoogleSignInPressed extends AuthEvent {
   const AuthGoogleSignInPressed();
 }
@@ -42,7 +36,6 @@ final class AuthSessionRestoreRequested extends AuthEvent {
   const AuthSessionRestoreRequested();
 }
 
-/// The log-out button was pressed.
 final class AuthLogoutPressed extends AuthEvent {
   const AuthLogoutPressed();
 }

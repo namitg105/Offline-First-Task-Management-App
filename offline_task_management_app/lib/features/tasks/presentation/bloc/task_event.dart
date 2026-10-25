@@ -1,10 +1,8 @@
 part of 'task_bloc.dart';
 
-/// Past tense throughout: an event is a record of something that already
-/// happened, not an instruction. `TaskDeletionRequested` says the user asked;
-/// whether a row is actually deleted is the bloc's decision, taken by way of
-/// a use case. The old `TaskDeleted` claimed the deletion had already
-/// happened, which was a lie at the moment the event was dispatched.
+/// Past tense throughout: an event records something that already happened, not an
+/// instruction. `TaskDeletionRequested` says the user asked; whether a row is
+/// actually deleted is the bloc's decision.
 @immutable
 sealed class TaskEvent {
   const TaskEvent();
@@ -28,7 +26,6 @@ final class TaskCategoriesRequested extends TaskEvent {
   const TaskCategoriesRequested();
 }
 
-/// The new-task form was submitted.
 final class TaskCreationSubmitted extends TaskEvent {
   final String userId;
   final String title;
@@ -47,13 +44,11 @@ final class TaskCreationSubmitted extends TaskEvent {
   });
 }
 
-/// The edit form was submitted for an existing task.
 final class TaskEditSubmitted extends TaskEvent {
   final Task task;
   const TaskEditSubmitted(this.task);
 }
 
-/// The checkbox on a task was tapped.
 final class TaskCompletionToggled extends TaskEvent {
   final Task task;
   const TaskCompletionToggled(this.task);
@@ -70,12 +65,9 @@ final class TaskErrorDismissed extends TaskEvent {
   const TaskErrorDismissed();
 }
 
-// ---------------------------------------------------------------------------
-// Internal events. The database stream feeds these back into the bloc so that
-// every state change has exactly one source: an event. Nothing emits from
-// outside a handler. These two are genuinely past-tense facts — the rows DID
-// arrive, the read DID fail.
-// ---------------------------------------------------------------------------
+// Internal events: the database stream feeds these back into the bloc so every
+// state change has exactly one source, an event. Both are genuine past-tense
+// facts: the rows DID arrive, the read DID fail.
 
 final class TasksUpdated extends TaskEvent {
   final List<Task> tasks;

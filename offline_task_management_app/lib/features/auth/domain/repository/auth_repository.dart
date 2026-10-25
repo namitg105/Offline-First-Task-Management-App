@@ -3,11 +3,8 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/common/entities/user.dart';
 import '../../../../core/error/failures.dart';
 
-/// The CONTRACT. Pure Dart — it mentions no Supabase, no HTTP, no SQL.
-///
-/// The domain layer owns this file and the data layer implements it. That
-/// inverted arrow is what lets you swap Supabase for Firebase later without
-/// touching a single line of domain or presentation code.
+/// The contract. Pure Dart: no Supabase, HTTP or SQL. The domain owns it and the
+/// data layer implements it.
 abstract interface class AuthRepository {
   Future<Either<Failure, User>> signUpWithEmailPassword({
     required String name,

@@ -1,10 +1,9 @@
 import 'package:equatable/equatable.dart';
 
-/// The app's own idea of a user. Pure Dart: no Supabase, no JSON, no Flutter.
+/// The app's own idea of a user. Pure Dart: no Supabase, JSON or Flutter.
 ///
-/// It lives in `core/common` (not inside `features/auth`) because other
-/// features — the Tasks feature, for example — need to know who owns a task,
-/// and a feature must never import another feature's internals.
+/// Lives in `core/common` so other features (Tasks) can reference a task's owner
+/// without importing `features/auth`.
 class User extends Equatable {
   final String id;
   final String email;

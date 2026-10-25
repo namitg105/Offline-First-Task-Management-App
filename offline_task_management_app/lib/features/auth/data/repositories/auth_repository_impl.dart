@@ -11,8 +11,6 @@ import '../datasources/auth_remote_data_source.dart';
 /// The bridge. Its two jobs:
 ///   1. Turn thrown exceptions into returned [Failure]s.
 ///   2. Decide online vs offline behaviour.
-///
-/// Nothing above this class ever sees a try/catch again.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final ConnectionChecker connectionChecker;
@@ -29,11 +27,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) {
     return _authenticate(
-      () => remoteDataSource.signUpWithEmailPassword(
+      () {
+        return remoteDataSource.signUpWithEmailPassword(
         name: name,
         email: email,
         password: password,
-      ),
+      );
+      },
     );
   }
 
@@ -55,11 +55,9 @@ class AuthRepositoryImpl implements AuthRepository {
     return _authenticate(() => remoteDataSource.signInWithGoogle());
   }
 
-  /// The only method that is allowed to succeed with no internet.
-  ///
-  /// Offline-first rule: a user who logged in yesterday must reach their task
-  /// list today on the train, with no signal. Supabase already persisted the
-  /// session on disk, so we read the user straight out of it.
+  /// The only method allowed to succeed with no internet: a user who logged in
+  /// yesterday must reach their tasks today with no signal. Supabase already
+  /// persisted the session on disk, so the user is read straight out of it.
   @override
   Future<Either<Failure, User>> currentUser() async {
     try {
@@ -102,8 +100,8 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  /// DRY: all three sign-in paths need the same connectivity check and the
-  /// same exception-to-Failure translation. Written once, used three times.
+  /// Shared by all three sign-in paths: connectivity check plus exception-to-Failure
+  /// translation.
   Future<Either<Failure, User>> _authenticate(
     Future<User> Function() action,
   ) async {

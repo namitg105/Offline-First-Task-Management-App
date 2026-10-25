@@ -2,12 +2,9 @@ part of 'task_bloc.dart';
 
 enum TaskStatus { initial, loading, success, failure }
 
-/// One state class with a status field, rather than a sealed hierarchy.
-///
-/// Reason: a sealed `TaskFailure` state would have to throw away [tasks], so
-/// a failed *write* would blank the user's list. Here the list survives every
-/// status change, which is what "preserve state during navigation" and
-/// "useful loading, empty and error states" actually require.
+/// One state class with a status field rather than a sealed hierarchy: a sealed
+/// `TaskFailure` would have to throw away [tasks], so a failed write would blank
+/// the user's list. Here the list survives every status change.
 class TaskState extends Equatable {
   final TaskStatus status;
   final List<Task> tasks;

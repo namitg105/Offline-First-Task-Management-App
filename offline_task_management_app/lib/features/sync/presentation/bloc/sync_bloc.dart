@@ -9,11 +9,8 @@ import '../../domain/entities/sync_state.dart';
 part 'sync_event.dart';
 
 /// Adapter between the sync engine and the widgets that display its progress.
-///
-/// It holds no synchronisation logic of its own — all of that lives in
-/// [SyncService], which is plain Dart and testable without Flutter. This class
-/// only turns events into calls on the engine, and the engine's stream back
-/// into states.
+/// Holds no synchronisation logic: that lives in [SyncService], plain Dart and
+/// testable without Flutter.
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
   final SyncService _syncService;
   StreamSubscription<SyncState>? _engineSubscription;

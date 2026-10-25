@@ -8,10 +8,9 @@ import '../models/task_model.dart';
 abstract interface class TaskRemoteDataSource {
   /// INSERT ... ON CONFLICT (id) DO UPDATE.
   ///
-  /// Upsert, not insert, is what makes a retry safe: sending the same change
-  /// twice lands on the same row instead of creating a second task.
-  /// A tombstone is just a row whose deleted_at is set, so deletes travel
-  /// through this same method.
+  /// Upsert, not insert, makes a retry safe: the same change sent twice lands on
+  /// the same row. A tombstone is just a row with deleted_at set, so deletes use
+  /// this method too.
   Future<void> upsertTask(TaskModel task);
 
   /// Delta pull: only rows this user changed after [since].

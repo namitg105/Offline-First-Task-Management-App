@@ -3,12 +3,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/secrets/app_secrets.dart';
 
-/// One job only: open the native Google account picker and hand back the
-/// **ID token** Google signs for us. It knows nothing about Supabase.
-///
-/// Single Responsibility: Google talk lives here, Supabase talk lives in
-/// [AuthRemoteDataSourceImpl]. Testing the data source only needs a fake of
-/// this tiny interface.
+/// Opens the native Google account picker and returns the ID token Google signs.
+/// Knows nothing about Supabase.
 abstract interface class GoogleAuthService {
   /// Returns a JWT signed by Google (`accounts.google.com`).
   Future<String> getIdToken();
@@ -24,10 +20,9 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
 
   /// google_sign_in 7.x must be initialised once before any call.
   ///
-  /// `serverClientId` is the **Web** OAuth client ID. It tells Google:
-  /// "mint the ID token for this audience". Supabase then checks that the
-  /// token's `aud` claim equals the Client ID you pasted into its Google
-  /// provider settings — that is how it knows the token is really yours.
+  /// `serverClientId` is the **Web** OAuth client ID: Google mints the ID token for
+  /// that audience, and Supabase checks the token's `aud` against the Client ID in
+  /// its Google provider settings.
   Future<void> _ensureInitialized() async {
     if (_initialized) return;
     await googleSignIn.initialize(
@@ -41,7 +36,7 @@ class GoogleAuthServiceImpl implements GoogleAuthService {
   Future<String> getIdToken() async {
     try {
       await _ensureInitialized();
-
+        
       if (!googleSignIn.supportsAuthenticate()) {
         throw const ServerException(
           'Google sign-in is not supported on this platform.',

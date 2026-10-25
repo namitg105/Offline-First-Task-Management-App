@@ -2,9 +2,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 /// Owns the SQLite file: opening it, creating the schema, migrating it.
-///
-/// Nothing else in the app opens a database. One owner = one place to look
-/// when something is wrong with persistence.
+/// Nothing else in the app opens a database.
 class AppDatabase {
   static const String _fileName = 'offline_tasks.db';
 
@@ -37,14 +35,9 @@ class AppDatabase {
   Future<void> _onCreate(Database db, int version) async {
     final batch = db.batch();
 
-    // ---------------------------------------------------------------------
-    // tasks — the app's source of truth. Supabase is a replica of this.
-    //
-    // id is TEXT, not an auto-increment integer, because a task created in
-    // airplane mode needs an identity the instant it exists. The device
-    // generates a UUID v4; the server accepts it. That single decision is
-    // what makes "prevent duplicates" possible later.
-    // ---------------------------------------------------------------------
+    // tasks: the source of truth; Supabase is a replica of this.
+    // id is a device-generated UUID (TEXT), so a task created offline has an identity
+    // immediately and a retried push cannot create a duplicate.
     batch.execute('''
       CREATE TABLE tasks (
         id           TEXT    PRIMARY KEY,
@@ -70,15 +63,9 @@ class AppDatabase {
     batch.execute('CREATE INDEX idx_tasks_due ON tasks (user_id, due_at)');
     batch.execute('CREATE INDEX idx_tasks_unsynced ON tasks (is_synced)');
 
-    // ---------------------------------------------------------------------
-    // outbox — one row per change that has not reached the server yet.
-    //
-    // A task row and its outbox row are written in the SAME transaction.
-    // So the app can be killed at any instant and the database is still
-    // consistent: either the change exists and is queued, or neither.
-    // That is the brief's "recovery" requirement, enforced by the DBMS
-    // rather than by hopeful Dart code.
-    // ---------------------------------------------------------------------
+    // outbox: one row per change not yet sent to the server.
+    // A task row and its outbox row are written in the SAME transaction, so a crash
+    // leaves both or neither (the database enforces recovery, not Dart code).
     batch.execute('''
       CREATE TABLE outbox (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,19 +80,15 @@ class AppDatabase {
       )
     ''');
 
-    // The worker asks "what is due to be sent?" — this index answers it.
-    // AUTOINCREMENT id doubles as the ordering key, so changes replay in the
-    // order the user made them.
+    // Serves the worker's "what is due to be sent?" query. The AUTOINCREMENT id also
+    // keeps changes replaying in the order the user made them.
     batch.execute(
       'CREATE INDEX idx_outbox_ready ON outbox (next_retry_at, id)',
     );
     batch.execute('CREATE INDEX idx_outbox_task ON outbox (task_id)');
 
-    // ---------------------------------------------------------------------
-    // sync_meta — tiny key/value table. Currently remembers the timestamp of
-    // the last successful pull, so we can ask the server for "only what
-    // changed since then" instead of downloading everything each time.
-    // ---------------------------------------------------------------------
+    // sync_meta: key/value store. Currently the timestamp of the last successful pull,
+    // so the next sync asks only for what changed since then.
     batch.execute('''
       CREATE TABLE sync_meta (
         key   TEXT PRIMARY KEY,

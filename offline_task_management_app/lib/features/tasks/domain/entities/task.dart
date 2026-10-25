@@ -4,13 +4,11 @@ enum TaskPriority { low, medium, high }
 
 /// A task, as the business cares about it. Pure Dart.
 ///
-/// Deliberately absent: `deletedAt`. Deleting is implemented with tombstone
-/// rows so the change can be sent to the server later, but a tombstone is a
-/// *synchronisation* detail. The domain only knows tasks that exist.
+/// Deliberately absent: `deletedAt`. A tombstone is a synchronisation detail; the
+/// domain only knows tasks that exist.
 ///
-/// Deliberately present: [isSynced]. That one is not a leak — the user can
-/// see it ("this task is not backed up yet"), so it is part of the business
-/// meaning of a task in an offline-first app.
+/// Deliberately present: [isSynced]. The user can see it ("not backed up yet"), so
+/// it is part of a task's meaning in an offline-first app.
 class Task extends Equatable {
   final String id;
   final String userId;

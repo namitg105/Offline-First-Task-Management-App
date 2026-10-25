@@ -4,11 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/sync_state.dart';
 import '../bloc/sync_bloc.dart';
 
-/// The brief asks the app to "show whether the app is online or offline".
+/// Shows whether the app is online or offline (the brief asks for this).
 ///
-/// It stays silent when everything is synced — a permanent green bar teaches
-/// users to ignore the strip, which is exactly where you do not want them
-/// looking past an "offline" warning.
+/// Silent when everything is synced: a permanent green bar teaches users to ignore
+/// the strip, exactly where an "offline" warning must not be missed.
 class SyncStatusBanner extends StatelessWidget {
   const SyncStatusBanner({super.key});
 

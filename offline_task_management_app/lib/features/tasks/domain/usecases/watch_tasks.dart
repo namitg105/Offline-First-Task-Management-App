@@ -2,9 +2,8 @@ import '../entities/task.dart';
 import '../entities/task_filter.dart';
 import '../repository/task_repository.dart';
 
-/// Does not implement [UseCase] because that contract returns a Future.
-/// Forcing a stream into a Future-shaped interface would be obeying the
-/// letter of the architecture while breaking its point.
+/// Doesn't implement [UseCase] because that contract returns a Future, and a
+/// stream doesn't fit it.
 class WatchTasks {
   final TaskRepository taskRepository;
 

@@ -5,11 +5,10 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../repository/auth_repository.dart';
 
-/// Google sign-in needs no input from our UI: the Google account picker
-/// collects everything. Hence [NoParams].
+/// Takes no input: the Google account picker collects everything.
 class UserSignInWithGoogle implements UseCase<User, NoParams> {
   final AuthRepository authRepository;
-
+  
   const UserSignInWithGoogle(this.authRepository);
 
   @override

@@ -1,10 +1,6 @@
-/// Project-specific keys.
-///
-/// The Supabase anon key is NOT a password — it is a public, publishable key
-/// that only says "I am this project's mobile app". What actually protects
-/// your rows is Row Level Security in Postgres, which reads the signed JWT of
-/// the logged-in user. Still, keep this file out of git so you can rotate
-/// keys and keep project URLs private.
+/// Project-specific keys. The Supabase publishable key is public by design; Row
+/// Level Security is what protects the data. Real values go in the gitignored
+/// `app_secrets.dart` (a copy of this file).
 class AppSecrets {
   const AppSecrets._();
 
@@ -16,8 +12,7 @@ class AppSecrets {
   static const String supabasePublishableKey = 'YOUR-ANON-PUBLIC-KEY';
 
   /// Google Cloud Console -> Credentials -> OAuth 2.0 Client IDs -> **Web** client.
-  /// Android/iOS both send this as `serverClientId` so Google mints an ID token
-  /// whose `aud` claim matches what Supabase expects.
+  /// Sent as `serverClientId` so the ID token's `aud` matches what Supabase expects.
   static const String googleWebClientId = 'YOUR-WEB-CLIENT-ID.apps.googleusercontent.com';
 
   /// Google Cloud Console -> Credentials -> OAuth 2.0 Client IDs -> **iOS** client.

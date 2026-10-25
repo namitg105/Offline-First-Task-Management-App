@@ -5,8 +5,7 @@ sealed class AppUserEvent {
   const AppUserEvent();
 }
 
-/// A user signed in (by any route: email/password, Google, or a session
-/// restored from disk at startup).
+/// A user signed in, by any route (password, Google, or a session restored at startup).
 final class AppUserSessionStarted extends AppUserEvent {
   final User user;
   const AppUserSessionStarted(this.user);

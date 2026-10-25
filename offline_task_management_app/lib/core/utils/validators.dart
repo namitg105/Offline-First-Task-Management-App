@@ -1,5 +1,3 @@
-/// Input rules live in ONE place so the login page, the sign-up page and any
-/// future "change password" page can never disagree with each other (DRY).
 class Validators {
   const Validators._();
 

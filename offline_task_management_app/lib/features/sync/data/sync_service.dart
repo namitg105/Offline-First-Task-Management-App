@@ -10,13 +10,12 @@ import '../domain/entities/sync_state.dart';
 
 /// The background worker that reconciles the device database with Postgres.
 ///
-/// It is the ONLY thing in the app allowed to be slow. Nothing the user does
-/// waits on it: they write to SQLite, the UI updates, and this catches up
-/// whenever it can.
+/// The ONLY thing in the app allowed to be slow: users write to SQLite, the UI
+/// updates, and this catches up whenever it can.
 ///
-/// Order matters: push first, then pull. Pushing first means our own pending
-/// changes reach the server before we ask what the server has, so we never
-/// pull a stale row over an edit that was about to overwrite it anyway.
+/// Order matters: push first, then pull, so our pending changes reach the server
+/// before we ask what it has, and we never pull a stale row over an edit that was
+/// about to overwrite it anyway.
 class SyncService {
   final TaskLocalDataSource localDataSource;
   final TaskRemoteDataSource remoteDataSource;
@@ -54,10 +53,6 @@ class SyncService {
 
   Stream<SyncState> get stateStream => _stateController.stream;
   SyncState get state => _state;
-
-  // ------------------------------------------------------------------
-  // Lifecycle
-  // ------------------------------------------------------------------
 
   /// Called when a user signs in. Safe to call twice.
   void start(String userId) {
@@ -104,10 +99,6 @@ class SyncService {
     await _stateController.close();
   }
 
-  // ------------------------------------------------------------------
-  // The cycle
-  // ------------------------------------------------------------------
-
   Future<void> syncNow() async {
     final userId = _userId;
     if (userId == null) return;
@@ -151,9 +142,8 @@ class SyncService {
 
   /// Drains the outbox, oldest change first.
   ///
-  /// One entry failing must not block the others — a single task rejected by
-  /// a constraint should not freeze every other change behind it. So failures
-  /// are recorded and the loop moves on.
+  /// One entry failing must not block the others, so failures are recorded and the
+  /// loop moves on.
   Future<void> _push() async {
     var rounds = 0;
     while (rounds++ < 20) {
@@ -191,9 +181,8 @@ class SyncService {
 
   /// Exponential backoff with jitter: 2s, 4s, 8s ... capped at 5 minutes.
   ///
-  /// The jitter matters. Without it, every phone that lost signal in the same
-  /// tunnel retries at the same instant and stampedes the server the moment
-  /// the train comes out.
+  /// The jitter matters: without it every phone that lost signal in the same tunnel
+  /// retries at the same instant and stampedes the server.
   Duration _backoffFor(int attempts) {
     final capped = min(attempts, _maxTightRetries);
     final seconds = min(pow(2, capped).toInt(), 300);

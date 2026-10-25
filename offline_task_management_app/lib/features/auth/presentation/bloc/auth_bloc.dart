@@ -12,12 +12,9 @@ import '../../domain/usecases/user_sign_up.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
-/// Turns things the user did (events) into things the UI shows (states).
-///
-/// Notice what is NOT here: no Supabase, no HTTP, no SQL, no try/catch, and —
-/// since this refactor — no reference to AppUserBloc either. A bloc reaching
-/// into another bloc couples two features together; instead this one just
-/// reports what happened, and the app shell listens and tells AppUserBloc.
+/// Turns user actions (events) into UI states. It holds no Supabase, HTTP or SQL,
+/// and no reference to AppUserBloc: it only reports what happened and the app
+/// shell forwards it.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserSignUp _userSignUp;
   final UserLogin _userLogin;
@@ -37,8 +34,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _currentUser = currentUser,
         _userLogout = userLogout,
         super(const AuthInitial()) {
-    // Every event except the dismissal puts the UI into a loading state. One
-    // line instead of repeating `emit(AuthLoading())` in five handlers.
+    // Every event except the dismissal shows the loading state, once here instead of
+    // in each handler.
     on<AuthEvent>((event, emit) {
       if (event is! AuthErrorDismissed) emit(const AuthLoading());
     });

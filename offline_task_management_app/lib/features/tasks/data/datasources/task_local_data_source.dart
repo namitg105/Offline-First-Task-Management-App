@@ -10,18 +10,13 @@ import '../models/task_model.dart';
 
 /// Everything that touches the on-device database.
 ///
-/// Note that tasks and the outbox live behind ONE class rather than two.
-/// That is deliberate: a task write and its queued change must land in the
-/// same SQLite transaction, and a transaction cannot span two owners without
-/// leaking the `Transaction` object into both of their public APIs. One class
-/// whose responsibility is "local persistence of tasks, including their
-/// pending changes" keeps the atomicity guarantee impossible to break.
+/// Tasks and the outbox live behind ONE class on purpose: a task write and its
+/// queued change must land in the same SQLite transaction, and a transaction
+/// can't span two owners without leaking `Transaction` into both public APIs.
 abstract interface class TaskLocalDataSource {
-  /// Fires once after every successful local write.
-  ///
-  /// The sync engine listens to this so a change starts travelling to the
-  /// server moments after the user makes it, without the repository ever
-  /// having to know that a sync engine exists.
+  /// Fires once after every successful local write. The sync engine listens so a
+  /// change starts travelling to the server moments after the user makes it,
+  /// without the repository knowing a sync engine exists.
   Stream<void> get changes;
 
   /// Emits the current list immediately, then again after every local write.
@@ -67,10 +62,6 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   @override
   Stream<void> get changes => _changes.stream;
 
-  // ------------------------------------------------------------------
-  // Reads
-  // ------------------------------------------------------------------
-
   @override
   Stream<List<TaskModel>> watchTasks(String userId, TaskFilter filter) async* {
     yield await getTasks(userId, filter);
@@ -79,12 +70,9 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     }
   }
 
-  /// Searching and filtering happen in SQL, not in Dart.
-  ///
-  /// Pulling every row into memory and running `.where()` over it works fine
-  /// with twenty tasks and falls over with two thousand. The database already
-  /// has indexes for exactly this; letting it do the work is both faster and
-  /// less code.
+  /// Searching and filtering happen in SQL, not in Dart: pulling every row into
+  /// memory and calling `.where()` is fine at twenty tasks and falls over at two
+  /// thousand, and the indexes already exist for exactly this.
   @override
   Future<List<TaskModel>> getTasks(String userId, TaskFilter filter) async {
     try {
@@ -137,12 +125,9 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     }
   }
 
-  /// Built from an enum, never from user text, so ORDER BY can never become
-  /// an injection point the way a WHERE clause could.
-  ///
-  /// `due_at IS NULL` first pushes undated tasks to the bottom: in SQLite a
-  /// NULL would otherwise sort before every real date and bury the urgent
-  /// ones under tasks with no deadline at all.
+  /// Built from an enum, never from user text, so ORDER BY can't become an injection
+  /// point. `due_at IS NULL` first pushes undated tasks to the bottom: SQLite sorts
+  /// NULL before every real date, which would bury urgent tasks under undated ones.
   String _orderBy(TaskSort sort) => switch (sort) {
         TaskSort.dueDate =>
           'is_completed ASC, due_at IS NULL, due_at ASC, created_at DESC',
@@ -171,9 +156,7 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     return rows.isEmpty ? null : TaskModel.fromLocalRow(rows.first);
   }
 
-  // ------------------------------------------------------------------
-  // Writes — each one is a single transaction
-  // ------------------------------------------------------------------
+  // Writes: each one is a single transaction
 
   @override
   Future<void> saveTask(TaskModel task) async {
@@ -225,11 +208,9 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     }
   }
 
-  /// Appends to the outbox, collapsing changes the server has not seen yet.
-  ///
-  /// Toggling a checkbox ten times offline should send one final value, not
-  /// ten operations. Entries that have already been attempted are left alone:
-  /// one of them may be in flight right now.
+  /// Appends to the outbox, collapsing changes the server hasn't seen yet: toggling
+  /// a checkbox ten times offline sends one final value. Entries already attempted
+  /// are left alone, since one may be in flight.
   Future<void> _enqueue(
     DatabaseExecutor txn,
     TaskModel task,
@@ -250,9 +231,7 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     });
   }
 
-  // ------------------------------------------------------------------
-  // Pull side — merging what the server sent us
-  // ------------------------------------------------------------------
+  // Pull side: merging what the server sent us
 
   @override
   Future<void> applyRemoteTasks(List<TaskModel> remoteTasks) async {
@@ -286,10 +265,6 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     });
     _notify();
   }
-
-  // ------------------------------------------------------------------
-  // Outbox bookkeeping
-  // ------------------------------------------------------------------
 
   @override
   Future<List<OutboxEntry>> pendingEntries({int limit = 50, DateTime? now}) async {
@@ -357,10 +332,6 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
     );
     _notify();
   }
-
-  // ------------------------------------------------------------------
-  // sync_meta
-  // ------------------------------------------------------------------
 
   @override
   Future<DateTime?> getLastPulledAt() async {

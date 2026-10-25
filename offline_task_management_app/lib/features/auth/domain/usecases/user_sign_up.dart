@@ -20,8 +20,6 @@ class UserSignUp implements UseCase<User, UserSignUpParams> {
   }
 }
 
-/// A params object instead of positional arguments: adding a field later
-/// (say, a timezone) does not change the UseCase signature. Open/Closed.
 class UserSignUpParams {
   final String name;
   final String email;

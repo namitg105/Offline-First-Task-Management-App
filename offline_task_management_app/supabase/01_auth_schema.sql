@@ -1,10 +1,6 @@
--- ============================================================================
--- Auth feature schema.  Run this in Supabase Dashboard -> SQL Editor.
---
--- Supabase owns the `auth.users` table (email, encrypted password, provider).
--- You cannot add columns to it, so application-level user data lives in a
--- table you own: public.profiles, keyed by the same uuid.
--- ============================================================================
+-- Auth feature schema. Run in Supabase Dashboard -> SQL Editor.
+-- Supabase owns auth.users and you can't add columns to it, so app-level user data
+-- lives in public.profiles, keyed by the same uuid.
 
 create table if not exists public.profiles (
   id          uuid        primary key references auth.users (id) on delete cascade,
@@ -13,11 +9,8 @@ create table if not exists public.profiles (
   updated_at  timestamptz not null default now()
 );
 
--- ----------------------------------------------------------------------------
--- Row Level Security: the real lock on your data.
--- Without it, anybody holding the public anon key could read every profile.
--- auth.uid() is read straight out of the `sub` claim of the caller's JWT.
--- ----------------------------------------------------------------------------
+-- Row Level Security: the real lock on the data. Without it anybody holding the
+-- public key could read every profile. auth.uid() is read from the caller's JWT `sub`.
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -31,13 +24,10 @@ create policy "profiles_update_own"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
--- ----------------------------------------------------------------------------
--- Trigger: every new auth user automatically gets a profile row.
--- This is why the app never has to INSERT a profile itself — one less network
--- call, and no window where a user exists without a profile.
--- `security definer` lets the function bypass RLS, which it must, because at
--- INSERT time nobody is authenticated yet.
--- ----------------------------------------------------------------------------
+-- Trigger: every new auth user automatically gets a profile row, so the app never
+-- INSERTs one itself (one less network call, and no window where a user has no
+-- profile). `security definer` lets it bypass RLS, which it must: at INSERT time
+-- nobody is authenticated yet.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

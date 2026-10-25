@@ -1,10 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-/// A [Failure] is the "expected, handled" version of an error.
-///
-/// Data layer throws exceptions -> repository converts them to Failures ->
-/// domain and presentation only ever see Failures. This is why the domain
-/// layer never needs a single try/catch.
+/// The expected, handled form of an error. The repository turns data-layer
+/// exceptions into Failures, so domain and presentation need no try/catch.
 sealed class Failure extends Equatable {
   final String message;
   const Failure(this.message);
@@ -18,14 +15,12 @@ final class ServerFailure extends Failure {
   const ServerFailure(super.message);
 }
 
-/// There is no usable internet connection right now.
 final class NetworkFailure extends Failure {
   const NetworkFailure([
     super.message = 'No internet connection. Please try again when you are online.',
   ]);
 }
 
-/// Something went wrong reading/writing the on-device cache.
 final class CacheFailure extends Failure {
   const CacheFailure(super.message);
 }

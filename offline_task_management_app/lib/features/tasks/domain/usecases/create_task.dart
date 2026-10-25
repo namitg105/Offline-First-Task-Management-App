@@ -1,6 +1,4 @@
-// fpdart exports a `Task` of its own (its lazy-future monad). Our domain
-// entity is also called Task, so the name is hidden here rather than
-// renaming the entity — Task is the right word for what it models.
+// fpdart exports its own `Task`; hide it so the domain `Task` is the one in scope.
 import 'package:fpdart/fpdart.dart' hide Task;
 
 import '../../../../core/error/failures.dart';

@@ -2,12 +2,11 @@ import 'dart:convert';
 
 import '../../domain/entities/task.dart';
 
-/// [Task] plus the two dialects it has to speak:
-///   * SQLite rows  — integers for booleans and timestamps
-///   * Supabase JSON — ISO-8601 strings, no local-only columns
+/// [Task] plus the two dialects it speaks: SQLite rows (integers for booleans and
+/// timestamps) and Supabase JSON (ISO-8601 strings, no local-only columns).
 ///
-/// It also carries [deletedAt], which the domain entity deliberately does not
-/// know about: a tombstone is a sync mechanism, not a business concept.
+/// Also carries [deletedAt], which the domain entity deliberately doesn't know:
+/// a tombstone is a sync mechanism, not a business concept.
 class TaskModel extends Task {
   final DateTime? deletedAt;
 
@@ -61,10 +60,6 @@ class TaskModel extends Task {
     );
   }
 
-  // --------------------------------------------------------------------
-  // SQLite
-  // --------------------------------------------------------------------
-
   /// SQLite has no BOOLEAN and no DATETIME: booleans become 0/1 and instants
   /// become epoch milliseconds, which sort and compare correctly as integers.
   Map<String, Object?> toLocalRow() => {
@@ -99,10 +94,6 @@ class TaskModel extends Task {
       isSynced: (row['is_synced'] as int? ?? 0) == 1,
     );
   }
-
-  // --------------------------------------------------------------------
-  // Supabase / Postgres
-  // --------------------------------------------------------------------
 
   /// `is_synced` is local bookkeeping and never leaves the device.
   /// Timestamps go up as UTC ISO-8601, which is what `timestamptz` expects.

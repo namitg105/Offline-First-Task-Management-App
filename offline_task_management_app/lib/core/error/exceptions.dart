@@ -1,7 +1,5 @@
-/// Thrown ONLY inside the data layer (data sources).
-///
-/// Rule of the architecture: exceptions never escape the data layer.
-/// The repository catches them and converts them into a [Failure].
+/// Thrown only inside the data layer. The repository converts it into a [Failure]
+/// so exceptions never escape that layer.
 class ServerException implements Exception {
   final String message;
   const ServerException(this.message);
@@ -10,7 +8,6 @@ class ServerException implements Exception {
   String toString() => 'ServerException: $message';
 }
 
-/// Thrown when something goes wrong with local (on-device) storage.
 class CacheException implements Exception {
   final String message;
   const CacheException(this.message);

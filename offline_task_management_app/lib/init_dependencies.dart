@@ -108,7 +108,6 @@ void _initAuth() {
     );
 }
 
-/// Tasks feature.
 void _initTasks() {
   serviceLocator
     // Data sources

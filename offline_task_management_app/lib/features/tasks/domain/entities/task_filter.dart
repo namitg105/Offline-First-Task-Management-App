@@ -6,10 +6,8 @@ enum TaskCompletionFilter { all, pending, completed }
 
 enum TaskSort { dueDate, priority, createdAt, title }
 
-/// Everything the list screen can narrow or reorder by, as one value.
-///
-/// Passing a single object instead of five arguments means adding a sixth
-/// filter later changes no method signatures anywhere — Open/Closed.
+/// Everything the list screen can narrow or reorder by, as one value, so adding a
+/// filter later changes no method signatures.
 class TaskFilter extends Equatable {
   final String query;
   final TaskCompletionFilter completion;

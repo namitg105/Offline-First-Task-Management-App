@@ -23,11 +23,9 @@ final class AuthFailure extends AuthState {
   const AuthFailure(this.message);
 }
 
-/// Signed out, or started up with no session to restore.
-///
-/// Distinct from [AuthFailure] on purpose: finding no saved session on a fresh
-/// install is the normal case, not an error, and showing the user a red
-/// "no active session" snackbar every cold start would be nonsense.
+/// Signed out, or started with no session to restore. Kept distinct from
+/// [AuthFailure]: no saved session on a fresh install is normal, not an error
+/// to show the user.
 final class AuthLoggedOut extends AuthState {
   const AuthLoggedOut();
 }

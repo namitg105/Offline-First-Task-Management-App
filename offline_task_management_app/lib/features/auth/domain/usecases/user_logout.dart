@@ -4,8 +4,6 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../repository/auth_repository.dart';
 
-/// `Unit` is fpdart's "nothing useful to return, but it succeeded".
-/// It is the functional equivalent of `void`.
 class UserLogout implements UseCase<Unit, NoParams> {
   final AuthRepository authRepository;
 

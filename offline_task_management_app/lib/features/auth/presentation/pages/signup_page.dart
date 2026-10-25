@@ -57,9 +57,8 @@ class _SignUpPageState extends State<SignUpPage> {
             if (state is AuthFailure) {
               showSnackBar(context, state.message);
             } else if (state is AuthSuccess) {
-              // AppUserBloc has already been told, so the root widget is
-              // about to swap to the task list. Just clear this page off
-              // the stack.
+              // AppUserBloc has already been told, so the root widget is about to swap to the
+              // task list. Just clear this page off the stack.
               Navigator.of(context).popUntil((route) => route.isFirst);
             }
           },

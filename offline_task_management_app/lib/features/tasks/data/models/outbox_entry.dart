@@ -4,10 +4,9 @@ enum OutboxOperation { upsert, delete }
 
 /// One unsent change, exactly as it sits in the `outbox` table.
 ///
-/// Why store a full payload snapshot instead of just the task id?
-/// Because by the time the worker gets to this row, the user may have edited
-/// the task three more times. Replaying intent in order needs the value as it
-/// was *at that moment*, not as it is now.
+/// It stores a full payload snapshot, not just the task id: by the time the
+/// worker reaches this row the task may have been edited three more times, and
+/// replaying in order needs the value as it was at that moment.
 class OutboxEntry {
   final int id;
   final String taskId;

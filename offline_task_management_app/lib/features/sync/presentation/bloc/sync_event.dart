@@ -22,11 +22,8 @@ final class SyncRequested extends SyncEvent {
   const SyncRequested();
 }
 
-/// Internal. The sync engine reported new progress.
-///
-/// The engine's stream is fed back in as an event rather than emitted
-/// directly, so that every state this bloc produces has exactly one source:
-/// an event. Nothing emits from outside a handler.
+/// Internal. The sync engine reported new progress. Its stream is fed back in as
+/// an event so every state this bloc produces has exactly one source.
 final class SyncStateReported extends SyncEvent {
   final SyncState state;
   const SyncStateReported(this.state);

@@ -4,7 +4,6 @@ import '../../../../core/error/exceptions.dart';
 import '../models/user_model.dart';
 import 'google_auth_service.dart';
 
-/// Contract for "everything auth-related that leaves the device".
 abstract interface class AuthRemoteDataSource {
   /// The session Supabase keeps on disk (access token + refresh token).
   /// Non-null means "this device remembers a login", even with no internet.

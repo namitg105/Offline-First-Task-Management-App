@@ -71,9 +71,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   /// Tear the old query down and start a new one.
   ///
-  /// The subscription is managed by hand rather than with `emit.forEach`
-  /// because the query itself changes whenever the filter changes, and
-  /// `emit.forEach` owns its handler until the stream ends.
+  /// Managed by hand rather than `emit.forEach`, because the query changes whenever
+  /// the filter changes and `emit.forEach` owns its handler until the stream ends.
   void _resubscribe(TaskFilter filter) {
     final userId = _userId;
     if (userId == null) return;

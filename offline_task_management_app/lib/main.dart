@@ -67,9 +67,8 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  /// AuthBloc reports the outcome of a sign-in attempt. Turning that into
-  /// "there is now a session" is this shell's job, not AuthBloc's — which is
-  /// why AuthBloc no longer holds a reference to AppUserBloc.
+  /// AuthBloc reports the outcome of a sign-in attempt; turning that into "there is
+  /// now a session" is this shell's job, not AuthBloc's.
   void _onAuthStateChanged(BuildContext context, AuthState state) {
     final appUserBloc = context.read<AppUserBloc>();
     if (state is AuthSuccess) {
@@ -91,11 +90,9 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
-    // Logged out: stop the worker, then wipe the local database.
-    //
-    // Wiping matters on a shared phone. Tasks are cached on disk and readable
-    // offline by design, so leaving them behind would let the next person to
-    // sign in read the previous user's work.
+    // Logged out: stop the worker, then wipe the local database. On a shared phone,
+    // tasks cached on disk are readable offline by design, so leaving them would let
+    // the next person to sign in read the previous user's work.
     syncBloc.add(const SyncWatchStopped());
     serviceLocator<TaskLocalDataSource>().clear();
   }

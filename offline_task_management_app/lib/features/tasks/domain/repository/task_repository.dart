@@ -1,6 +1,4 @@
-// fpdart exports a `Task` of its own (its lazy-future monad). Our domain
-// entity is also called Task, so the name is hidden here rather than
-// renaming the entity — Task is the right word for what it models.
+// fpdart exports its own `Task`; hide it so the domain `Task` is the one in scope.
 import 'package:fpdart/fpdart.dart' hide Task;
 
 import '../../../../core/error/failures.dart';
@@ -10,10 +8,9 @@ import '../entities/task_filter.dart';
 abstract interface class TaskRepository {
   /// A live view of this user's tasks, straight from the local database.
   ///
-  /// Returns a plain Stream rather than `Stream<Either<Failure, T>>`: wrapping
-  /// emission in an Either would make every widget unwrap a value that is
-  /// almost never a failure. Read errors are surfaced as stream errors and
-  /// handled once, in the bloc.
+  /// A plain Stream rather than `Stream<Either<Failure, T>>`: read errors surface as
+  /// stream errors and are handled once, in the bloc, so widgets don't unwrap an
+  /// Either that is almost never a failure.
   Stream<List<Task>> watchTasks(String userId, TaskFilter filter);
 
   /// Distinct categories this user has used, for the filter sheet.

@@ -1,10 +1,7 @@
 import '../../../../core/common/entities/user.dart';
 
-/// A [UserModel] is a [User] that also knows how to talk JSON.
-///
-/// Why not put fromJson/toJson on the entity itself? Because the entity lives
-/// in the domain layer, and the domain must not know that your backend speaks
-/// JSON. If tomorrow the backend returns XML, only this file changes.
+/// A [User] that also knows how to talk JSON. The conversion lives here, not on the
+/// entity, so the domain never learns the backend's wire format.
 class UserModel extends User {
   const UserModel({
     required super.id,
@@ -12,8 +9,7 @@ class UserModel extends User {
     required super.name,
   });
 
-  /// Maps a row of the Postgres `profiles` table (or Supabase auth metadata)
-  /// into our model.
+  /// Maps a row of the Postgres `profiles` table into our model.
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,

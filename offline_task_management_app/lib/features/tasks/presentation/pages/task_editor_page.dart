@@ -7,15 +7,13 @@ import '../../domain/entities/task.dart';
 import '../bloc/task_bloc.dart';
 import '../widgets/priority_chip.dart';
 
-/// One page for both "new task" and "edit task".
-///
-/// The two screens differ only in whether [task] is null, so two near-identical
-/// widgets would be a DRY violation waiting to drift apart.
+/// One page for both "new task" and "edit task": they differ only in whether
+/// [task] is null.
 class TaskEditorPage extends StatefulWidget {
   final Task? task;
-
-  static Route<void> route({Task? task}) =>
-      MaterialPageRoute(builder: (_) => TaskEditorPage(task: task));
+  static Route<void> route({Task? task}) {
+    return MaterialPageRoute(builder: (_) => TaskEditorPage(task: task));
+  }
 
   const TaskEditorPage({super.key, this.task});
 
